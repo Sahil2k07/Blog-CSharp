@@ -1,0 +1,44 @@
+services:
+  # PostgreSQL Service
+  postgres:
+    image: postgres:latest
+    container_name: Blog_CSharp_db
+    environment:
+      POSTGRES_USER: temp_user
+      POSTGRES_PASSWORD: temp_pass
+      POSTGRES_DB: temp_dbname
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+  # CSharp Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: Blog-CSharp
+    environment:
+      APP_URL: "http://0.0.0.0:5000"
+      ALLOWED_ORIGIN: "*"
+      DATABASE_URL: "Host=Blog_CSharp_db;Port=5432;Database=temp_dbname;Username=temp_user;Password=temp_pass;"
+      JWT_SECRET: "Blog-App-C#-secret-for-authenticating-users"
+      CLOUD_NAME: ${CLOUD_NAME}
+      API_KEY: ${API_KEY}
+      API_SECRET: ${API_SECRET}
+      FOLDER_NAME: ${FOLDER_NAME}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASS: ${MAIL_PASS}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    command: >
+      sh -c "
+      dotnet ef database update &&
+      dotnet run
+      "
+
+volumes:
+  postgres_data:
